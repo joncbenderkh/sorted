@@ -30,7 +30,7 @@ during a sort. Level difficulty is determined by the **cache size** and the
 
 ## Commands
 
-Godot 4.4.1 (pinned in `ci.yml` and `release.yml`); gdtoolkit 4.x for lint.
+Godot 4.7.2 (pinned in `ci.yml` and `release.yml`); gdtoolkit 4.x for lint.
 
 - Import / parse check: `godot --headless --import`
 - Smoke run: `godot --headless --quit-after 5`
