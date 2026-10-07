@@ -18,6 +18,15 @@ func _init(p_type: Type, p_first: int, p_second: int) -> void:
 	second = p_second
 
 
+## True when `other` does the same thing; a swap is the same either way round.
+func is_same_move(other: SortStep) -> bool:
+	if type != other.type:
+		return false
+	if type == Type.SWAP and first == other.second and second == other.first:
+		return true
+	return first == other.first and second == other.second
+
+
 ## Look at two elements, wherever they are.
 static func compare(first_location: int, second_location: int) -> SortStep:
 	return SortStep.new(Type.COMPARE, first_location, second_location)
