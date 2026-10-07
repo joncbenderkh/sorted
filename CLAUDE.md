@@ -65,4 +65,4 @@ does not match `project.godot`.
 Scaffolded: Godot project, placeholder main scene, CI, desktop release
 workflow (unsigned; macOS not notarized). Not yet done: Android export preset
 and signed AAB/APK release, which need a keystore and secrets from the user
-(never generated unprompted); heapsort, insertion sort and merge sort exist (`scripts/sorting/`) with a bar visualizer (`scenes/visualizer.tscn`); the game layer, more algorithms (quicksort) and player-driven cache moves do not.
+(never generated unprompted); heapsort, insertion sort, merge sort and quicksort exist (`scripts/sorting/`) with a bar visualizer (`scenes/visualizer.tscn`); the game layer, a merge sort that adapts to a cache smaller than n/2, and player-driven cache moves do not.
