@@ -34,9 +34,14 @@ Godot 4.7.2 (pinned in `ci.yml` and `release.yml`); gdtoolkit 4.x for lint.
 
 - Import / parse check: `godot --headless --import`
 - Smoke run: `godot --headless --quit-after 5`
-- Lint: `gdlint scripts`
-- Format check: `gdformat --check scripts`
-- Tests: none yet; add GUT or gdUnit4 with the first algorithm and wire it into CI.
+- Lint: `gdlint scripts tests`
+- Format check: `gdformat --check scripts tests`
+- GUT tests (`tests/gut/`): `godot --headless -s addons/gut/gut_cmdln.gd -gconfig=res://.gutconfig.json`
+- gdUnit4 tests (`tests/gdunit/`): `godot --headless --path . -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests/gdunit --ignoreHeadlessMode`
+
+Both frameworks are vendored under `addons/` (GUT 9.7.1, gdUnit4 6.2.1) and
+are never linted or formatted. Pure algorithm logic goes in GUT; scene and
+input (touch/mouse) tests go in gdUnit4, whose scene runner simulates input.
 
 ## Versioning
 
@@ -49,4 +54,4 @@ does not match `project.godot`.
 Scaffolded: Godot project, placeholder main scene, CI, desktop release
 workflow (unsigned; macOS not notarized). Not yet done: Android export preset
 and signed AAB/APK release, which need a keystore and secrets from the user
-(never generated unprompted); tests; any sorting logic.
+(never generated unprompted); any sorting logic.

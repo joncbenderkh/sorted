@@ -20,8 +20,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install "gdtoolkit==4.*"
-      - run: gdlint scripts
-      - run: gdformat --check scripts
+      - run: gdlint scripts tests
+      - run: gdformat --check scripts tests
 
   build:
     runs-on: ubuntu-latest
@@ -35,3 +35,10 @@ jobs:
         run: godot --headless --import
       - name: Run main scene headless
         run: godot --headless --quit-after 5
+      - name: Run GUT tests
+        run: godot --headless -s addons/gut/gut_cmdln.gd -gconfig=res://.gutconfig.json
+      - name: Run gdUnit4 tests
+        run: >
+          godot --headless -s -d --remote-debug tcp://127.0.0.1:0
+          res://addons/gdUnit4/bin/GdUnitCmdTool.gd
+          -a res://tests/gdunit --ignoreHeadlessMode
