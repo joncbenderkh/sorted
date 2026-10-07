@@ -5,7 +5,7 @@ extends SortAlgorithm
 const SLOT := 0
 
 
-func min_cache_size() -> int:
+func min_cache_size(_item_count: int) -> int:
 	return 1
 
 

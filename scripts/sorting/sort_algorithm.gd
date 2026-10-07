@@ -11,16 +11,17 @@ var _state: SortState
 var _steps: Array[SortStep] = []
 
 
-## The smallest cache the algorithm can run with.
-func min_cache_size() -> int:
+## The smallest cache the algorithm can run with on `item_count` elements.
+func min_cache_size(_item_count: int) -> int:
 	return 0
 
 
 ## Returns the steps that sort `values` using a cache of `cache_size` slots.
 func sort(values: Array[int], cache_size: int) -> Array[SortStep]:
 	_steps = []
-	if cache_size < min_cache_size():
-		push_error("needs a cache of at least %d slots" % min_cache_size())
+	var needed := min_cache_size(values.size())
+	if cache_size < needed:
+		push_error("needs a cache of at least %d slots" % needed)
 		return _steps
 	_state = SortState.new(values, cache_size)
 	_run()
