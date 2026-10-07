@@ -12,7 +12,9 @@ const COMPARE_COLOR := Color("f2c14e")
 const SWAP_COLOR := Color("e5484d")
 const MOVE_COLOR := Color("b57bee")
 
-var _algorithms: Dictionary = {"Heapsort": Heapsort, "Insertion sort": InsertionSort}
+var _algorithms: Dictionary = {
+	"Heapsort": Heapsort, "Insertion sort": InsertionSort, "Merge sort": MergeSort
+}
 var _state: SortState
 var _steps: Array[SortStep] = []
 var _step_index := 0
@@ -114,7 +116,7 @@ func _reset() -> void:
 	values.shuffle()
 	var algorithm_name := _algorithm_picker.get_item_text(_algorithm_picker.selected)
 	var algorithm: SortAlgorithm = _algorithms[algorithm_name].new()
-	var cache_size := algorithm.min_cache_size()
+	var cache_size := algorithm.min_cache_size(count)
 	_steps = algorithm.sort(values, cache_size)
 	_state = SortState.new(values, cache_size)
 	_step_index = 0

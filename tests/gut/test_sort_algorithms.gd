@@ -2,7 +2,7 @@ extends GutTest
 
 const SEED := 20261007
 
-var _algorithms: Array[GDScript] = [Heapsort, InsertionSort]
+var _algorithms: Array[GDScript] = [Heapsort, InsertionSort, MergeSort]
 
 
 func _replay(algorithm: SortAlgorithm, values: Array[int], cache_size: int) -> SortState:
@@ -22,7 +22,7 @@ func _replay(algorithm: SortAlgorithm, values: Array[int], cache_size: int) -> S
 
 func _assert_sorts(algorithm_class: GDScript, values: Array[int]) -> void:
 	var algorithm: SortAlgorithm = algorithm_class.new()
-	var cache_size := algorithm.min_cache_size()
+	var cache_size := algorithm.min_cache_size(values.size())
 	var state := _replay(algorithm, values, cache_size)
 	var expected := values.duplicate()
 	expected.sort()
@@ -76,3 +76,27 @@ func test_heapsort_never_touches_cache() -> void:
 		assert_true(step.type in [SortStep.Type.COMPARE, SortStep.Type.SWAP])
 		assert_false(SortState.is_cache_location(step.first))
 		assert_false(SortState.is_cache_location(step.second))
+
+
+func test_merge_sort_needs_half_the_array_as_cache() -> void:
+	assert_eq(MergeSort.new().min_cache_size(0), 0)
+	assert_eq(MergeSort.new().min_cache_size(1), 0)
+	assert_eq(MergeSort.new().min_cache_size(7), 3)
+	assert_eq(MergeSort.new().min_cache_size(8), 4)
+	var values: Array[int] = [4, 3, 2, 1]
+	assert_eq(MergeSort.new().sort(values, 1).size(), 0)
+	assert_push_error("needs a cache of at least 2 slots")
+
+
+func test_merge_sort_stays_within_n_log_n_compares() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED
+	for size in [2, 3, 8, 31, 64, 100]:
+		var values: Array[int] = []
+		for i in size:
+			values.append(rng.randi_range(0, 1000))
+		var compares := 0
+		for step in MergeSort.new().sort(values, size / 2):
+			if step.type == SortStep.Type.COMPARE:
+				compares += 1
+		assert_lte(compares, size * ceili(log(size) / log(2)), "size %d" % size)
