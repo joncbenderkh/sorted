@@ -35,6 +35,12 @@ jobs:
         run: godot --headless --import
       - name: Run main scene headless
         run: godot --headless --quit-after 5
+      - name: Export pack for every preset
+        run: |
+          mkdir -p build
+          for preset in Linux Windows macOS; do
+            godot --headless --export-pack "$preset" "build/$preset.pck"
+          done
       - name: Run GUT tests
         run: godot --headless -s addons/gut/gut_cmdln.gd -gconfig=res://.gutconfig.json
       - name: Run gdUnit4 tests
