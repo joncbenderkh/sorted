@@ -45,3 +45,10 @@ func test_finished_run_has_no_highlights_left() -> void:
 
 func _status_label(runner: GdUnitSceneRunner) -> Label:
 	return runner.find_child("Status") as Label
+
+
+func test_bars_leave_room_for_their_position_numbers() -> void:
+	var runner := scene_runner(SCENE)
+	await runner.simulate_frames(2)
+	var board := runner.find_child("Board") as SortBoard
+	assert_float(board.cell_rect(0).end.y).is_less_equal(board.size.y - SortBoard.POSITION_STRIP)

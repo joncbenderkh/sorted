@@ -16,6 +16,10 @@ const CACHE_LABEL_WIDTH := 80.0
 const CACHE_SLOT_WIDTH := 64.0
 const CACHE_SHARE := 0.25
 const LABEL_SIZE := 16
+const POSITION_STRIP := 22.0
+const POSITION_LABEL_SIZE := 12
+const POSITION_LABEL_SPACING := 26.0
+const POSITION_LABEL_COLOR := Color(1, 1, 1, 0.6)
 const BAR_FILL := 0.8
 
 var max_value := 1
@@ -114,7 +118,7 @@ func _cache_area() -> Rect2:
 
 func _array_area() -> Rect2:
 	var top := _cache_area().size.y
-	return Rect2(0, top, size.x, size.y - top)
+	return Rect2(0, top, size.x, size.y - top - POSITION_STRIP)
 
 
 func _draw() -> void:
@@ -127,8 +131,51 @@ func _draw() -> void:
 		_draw_cell(SortState.cache_location(slot))
 	for index in _state.array_size():
 		_draw_cell(index)
+	_draw_position_labels()
 	if _drag_source != NO_LOCATION:
 		_draw_drag()
+
+
+## Numbers the bars from 1, matching the positions the instructions mention.
+## With many bars only every few are labeled so the numbers stay readable,
+## but a highlighted bar is always numbered.
+func _draw_position_labels() -> void:
+	var count := _state.array_size()
+	if count == 0:
+		return
+	var font := ThemeDB.fallback_font
+	var strip_bottom := _array_area().end.y + POSITION_STRIP
+	var step := maxi(1, ceili(POSITION_LABEL_SPACING / (_array_area().size.x / count)))
+	for index in count:
+		if not _is_labeled(index, step):
+			continue
+		var cell := cell_rect(index)
+		var text := str(index + 1)
+		var width := (
+			font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, POSITION_LABEL_SIZE).x
+		)
+		var origin := Vector2(cell.position.x + (cell.size.x - width) / 2.0, strip_bottom - 6.0)
+		var color: Color = _highlights.get(index, POSITION_LABEL_COLOR)
+		draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, POSITION_LABEL_SIZE, color)
+
+
+## Highlighted bars are numbered; a regular label gives way to a highlighted
+## one that is too close for both to be legible, and of two such highlighted
+## bars only the lower is numbered.
+func _is_labeled(index: int, step: int) -> bool:
+	var highlighted := _highlights.has(index)
+	if not highlighted and index % step != 0:
+		return false
+	for location: int in _highlights:
+		var too_close := absf(location - index) * _slot_width() < POSITION_LABEL_SPACING
+		if location >= 0 and location != index and too_close:
+			if not highlighted or location < index:
+				return false
+	return true
+
+
+func _slot_width() -> float:
+	return _array_area().size.x / _state.array_size()
 
 
 func _draw_cell(location: int) -> void:
