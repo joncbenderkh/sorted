@@ -150,7 +150,8 @@ func _advance() -> bool:
 		push_error("illegal step: %s" % error)
 	_step_index += 1
 	var finished := _step_index == _steps.size()
-	_board.show_state(_state, _highlights_for(step), finished and _state.is_sorted())
+	var done := finished and _state.is_sorted()
+	_board.show_state(_state, {} if done else _highlights_for(step), done)
 	_update_status()
 	return not finished
 

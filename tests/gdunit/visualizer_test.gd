@@ -29,6 +29,20 @@ func test_picking_an_algorithm_resets_the_run() -> void:
 	assert_str(_status_label(runner).text).starts_with("step 0 / ")
 
 
+func test_finished_run_has_no_highlights_left() -> void:
+	var runner := scene_runner(SCENE)
+	var step_button := runner.find_child("StepButton") as Button
+	var status := _status_label(runner)
+	while true:
+		var counts := status.text.trim_prefix("step ").split(" / ")
+		if counts[0] == counts[1]:
+			break
+		step_button.pressed.emit()
+	var board := runner.find_child("Board") as SortBoard
+	assert_dict(board.get("_highlights")).is_empty()
+	assert_bool(board.get("_done")).is_true()
+
+
 func _status_label(runner: GdUnitSceneRunner) -> Label:
 	for label in runner.scene().find_children("*", "Label", true, false):
 		if label.text.begins_with("step "):
