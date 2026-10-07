@@ -2,7 +2,7 @@ extends GutTest
 
 const SEED := 20261007
 
-var _algorithms: Array[GDScript] = [Heapsort, InsertionSort, MergeSort]
+var _algorithms: Array[GDScript] = [Heapsort, InsertionSort, MergeSort, Quicksort]
 
 
 func _replay(algorithm: SortAlgorithm, values: Array[int], cache_size: int) -> SortState:
@@ -100,3 +100,32 @@ func test_merge_sort_stays_within_n_log_n_compares() -> void:
 			if step.type == SortStep.Type.COMPARE:
 				compares += 1
 		assert_lte(compares, size * ceili(log(size) / log(2)), "size %d" % size)
+
+
+func test_quicksort_holds_at_most_the_pivot_in_cache() -> void:
+	var values: Array[int] = [9, 4, 7, 1, 8, 2, 6, 3, 5]
+	var state := SortState.new(values, 1)
+	for step in Quicksort.new().sort(values, 1):
+		state.apply(step)
+		if step.type == SortStep.Type.STORE:
+			assert_eq(step.second, SortState.cache_location(0))
+	assert_true(state.is_sorted())
+
+
+func test_quicksort_stays_near_n_log_n_on_awkward_input() -> void:
+	var size := 100
+	var inputs: Array[Array] = []
+	var ascending: Array[int] = []
+	var descending: Array[int] = []
+	var equal: Array[int] = []
+	for i in size:
+		ascending.append(i)
+		descending.append(size - i)
+		equal.append(7)
+	inputs.assign([ascending, descending, equal])
+	for values: Array[int] in inputs:
+		var compares := 0
+		for step in Quicksort.new().sort(values, 1):
+			if step.type == SortStep.Type.COMPARE:
+				compares += 1
+		assert_lte(compares, size * ceili(log(size) / log(2)) * 2, "%s..." % [values.slice(0, 3)])

@@ -13,7 +13,10 @@ const SWAP_COLOR := Color("e5484d")
 const MOVE_COLOR := Color("b57bee")
 
 var _algorithms: Dictionary = {
-	"Heapsort": Heapsort, "Insertion sort": InsertionSort, "Merge sort": MergeSort
+	"Heapsort": Heapsort,
+	"Insertion sort": InsertionSort,
+	"Merge sort": MergeSort,
+	"Quicksort": Quicksort
 }
 var _state: SortState
 var _steps: Array[SortStep] = []
