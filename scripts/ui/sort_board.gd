@@ -11,6 +11,7 @@ const DONE_COLOR := Color("4caf6a")
 const EMPTY_COLOR := Color(1, 1, 1, 0.25)
 const DROP_COLOR := Color(1, 1, 1, 0.8)
 const DRAG_ALPHA := 0.35
+const HIGHLIGHT_LINE_WIDTH := 3.0
 const CACHE_LABEL_WIDTH := 80.0
 const CACHE_SLOT_WIDTH := 64.0
 const CACHE_SHARE := 0.25
@@ -136,7 +137,11 @@ func _draw_cell(location: int) -> void:
 	var left := cell.position.x + (cell.size.x - bar_width) / 2.0
 	var value: Variant = _state.get_value(location)
 	if value == null:
-		draw_rect(Rect2(left, cell.position.y, bar_width, cell.size.y), EMPTY_COLOR, false, 1.0)
+		var outline := Rect2(left, cell.position.y, bar_width, cell.size.y)
+		if _highlights.has(location):
+			draw_rect(outline, _highlights[location], false, HIGHLIGHT_LINE_WIDTH)
+		else:
+			draw_rect(outline, EMPTY_COLOR, false, 1.0)
 		return
 	var height := cell.size.y * float(value) / float(max_value)
 	var color: Color = _highlights.get(location, DONE_COLOR if _done else BAR_COLOR)

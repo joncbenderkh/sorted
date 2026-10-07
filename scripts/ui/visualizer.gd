@@ -17,6 +17,14 @@ const MOVE_COLOR := Color("b57bee")
 const HINT_COLOR := Color("4cc9f0")
 const ERROR_COLOR := Color("ff6b6b")
 const MESSAGE_SECONDS := 3.0
+const MESSAGE_HEIGHT := 48.0
+const INFO_COLOR := Color("b8bcc6")
+const WATCH_TEXT := "Watching. Pick Free play or Guided to make the moves yourself."
+const FREE_TEXT := (
+	"Drag a bar onto another bar to swap them, onto a gap to move it, or into the Cache to store it. "
+	+ "Drag a cached bar back into the array to load it. Sort in fewer moves than par."
+)
+const FINISHED_TEXT := "Sorted! Press Shuffle to play again."
 const MODE_NAMES: Array[String] = ["Watch", "Free play", "Guided"]
 
 var _algorithms: Dictionary = {
@@ -103,12 +111,13 @@ func _build_ui() -> void:
 
 	_message = Label.new()
 	_message.name = "Message"
-	_message.add_theme_color_override("font_color", ERROR_COLOR)
+	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_message.custom_minimum_size.y = MESSAGE_HEIGHT
 	root.add_child(_message)
 
 	_message_timer = Timer.new()
 	_message_timer.one_shot = true
-	_message_timer.timeout.connect(func() -> void: _message.text = "")
+	_message_timer.timeout.connect(_refresh_instructions)
 	add_child(_message_timer)
 
 	_board = SortBoard.new()
@@ -167,7 +176,7 @@ func _reset() -> void:
 		_session = PlaySession.new(values, algorithm, play_mode, cache_size)
 		_state = _session.state
 	_step_index = 0
-	_message.text = ""
+	_message_timer.stop()
 	_play_button.disabled = _session != null
 	_speed_slider.editable = _session == null
 	_hint_button.visible = _mode_picker.selected == Mode.GUIDED
@@ -175,6 +184,7 @@ func _reset() -> void:
 	_board.interactive = _session != null
 	_board.max_value = count
 	_board.show_state(_state)
+	_refresh_instructions()
 	_update_status()
 
 
@@ -228,10 +238,10 @@ func _on_move_requested(source: int, target: int) -> void:
 		return
 	var error := _session.try_move(step)
 	if error != "":
-		_show_message(error)
+		_show_message(error, ERROR_COLOR, MESSAGE_SECONDS)
 		_board.show_state(_state)
 		return
-	_message.text = ""
+	_refresh_instructions()
 	var done := _session.is_finished()
 	_board.show_state(_state, {} if done else _highlights_for(step), done)
 	_update_status()
@@ -241,11 +251,32 @@ func _show_hint() -> void:
 	var step := _session.expected_step() if _session != null else null
 	if step != null:
 		_board.show_state(_state, {step.first: HINT_COLOR, step.second: HINT_COLOR})
+		_show_message("Hint: %s." % step.describe(), HINT_COLOR)
 
 
-func _show_message(text: String) -> void:
+## Shows `text` in `color`; with `seconds` it then gives way to the instructions.
+func _show_message(text: String, color: Color, seconds: float = 0.0) -> void:
 	_message.text = text
-	_message_timer.start(MESSAGE_SECONDS)
+	_message.add_theme_color_override("font_color", color)
+	if seconds > 0.0:
+		_message_timer.start(seconds)
+	else:
+		_message_timer.stop()
+
+
+func _refresh_instructions() -> void:
+	_show_message(_instruction_text(), INFO_COLOR)
+
+
+func _instruction_text() -> String:
+	if _session == null:
+		return WATCH_TEXT
+	if _session.is_finished():
+		return FINISHED_TEXT
+	var expected := _session.expected_step()
+	if expected == null:
+		return FREE_TEXT
+	return "Goal: %s. Make its next move; Hint shows which bars." % expected.note
 
 
 func _update_status() -> void:

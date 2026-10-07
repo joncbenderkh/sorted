@@ -45,11 +45,13 @@ func test_guided_refuses_a_move_that_is_not_the_next_one() -> void:
 
 func test_guided_accepts_the_next_move_and_the_hint_shows_it() -> void:
 	var runner := await _start(GUIDED)
+	assert_str(_text(runner, "Message")).starts_with("Goal: ")
 	runner.find_child("HintButton").pressed.emit()
+	assert_str(_text(runner, "Message")).starts_with("Hint: ")
 	var highlights: Dictionary = _board(runner).get("_highlights")
 	assert_array(highlights.keys()).contains_exactly_in_any_order([1, _cache0])
 	_drag(runner, 1, _cache0)
-	assert_str(_text(runner, "Message")).is_empty()
+	assert_str(_text(runner, "Message")).starts_with("Goal: ")
 	assert_str(_text(runner, "Status")).starts_with("moves 1 / ")
 
 

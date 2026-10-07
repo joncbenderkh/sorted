@@ -121,3 +121,24 @@ func test_step_equality_ignores_swap_operand_order_only() -> void:
 	assert_true(SortStep.swap(1, 2).is_same_move(SortStep.swap(2, 1)))
 	assert_false(SortStep.move(1, 2).is_same_move(SortStep.move(2, 1)))
 	assert_false(SortStep.swap(1, 2).is_same_move(SortStep.move(1, 2)))
+
+
+func test_notes_do_not_affect_move_equality() -> void:
+	var noted := SortStep.swap(1, 2)
+	noted.note = "something"
+	assert_true(noted.is_same_move(SortStep.swap(2, 1)))
+
+
+func test_every_move_type_can_be_described() -> void:
+	var steps := [
+		SortStep.compare(0, 1),
+		SortStep.swap(0, 1),
+		SortStep.store(0, 0),
+		SortStep.load_from_cache(0, 0),
+		SortStep.move(0, 1),
+	]
+	var seen := {}
+	for step: SortStep in steps:
+		assert_ne(step.describe(), "")
+		seen[step.describe()] = true
+	assert_eq(seen.size(), steps.size())

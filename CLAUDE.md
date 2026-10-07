@@ -49,6 +49,9 @@ input (touch/mouse) tests go in gdUnit4, whose scene runner simulates input.
   locations; negative = cache slot), `SortState` (validates every step,
   including cache limits), `SortAlgorithm` base class and its subclasses.
   An algorithm runs against a `SortState` and returns its recorded steps.
+- Algorithms label what they are doing with `_set_phase(text)`; every
+  recorded `SortStep` carries that as `note`, which guided mode shows as the
+  goal. `SortStep.describe()` phrases a move for the Hint button.
 - `scripts/play/`: `DragMove` maps a drag between cells to a `SortStep`;
   `PlaySession` applies the player's moves (free play, or guided along an
   algorithm's own moves), counts them against par and explains refusals.
