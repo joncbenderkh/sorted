@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -22,6 +23,7 @@ jobs:
           use-dotnet: false
           include-templates: true
       - name: Verify tag matches project version
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           version=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
           test "v${version}" = "${GITHUB_REF_NAME}"
@@ -39,5 +41,6 @@ jobs:
           (cd windows && zip -r "../sorted-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
           mv macos/sorted.zip "sorted-${GITHUB_REF_NAME}-macos-universal.zip"
       - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: build/sorted-*
