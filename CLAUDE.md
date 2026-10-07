@@ -43,6 +43,17 @@ Both frameworks are vendored under `addons/` (GUT 9.7.1, gdUnit4 6.2.1) and
 are never linted or formatted. Pure algorithm logic goes in GUT; scene and
 input (touch/mouse) tests go in gdUnit4, whose scene runner simulates input.
 
+## Code layout
+
+- `scripts/sorting/`: pure logic. `SortStep` (compare/swap/store/load/move on
+  locations; negative = cache slot), `SortState` (validates every step,
+  including cache limits), `SortAlgorithm` base class and its subclasses.
+  An algorithm runs against a `SortState` and returns its recorded steps.
+- `scripts/ui/`: `SortBoard` draws a state; `visualizer.gd` replays steps.
+
+GUT prints only a warning and exits 0 when a test script fails to parse, so
+check that the script count in the run summary matches the files in `tests/gut/`.
+
 ## Versioning
 
 `0.1.0` lives in `project.godot` (`config/version`) and `scripts/version.gd`;
@@ -54,4 +65,4 @@ does not match `project.godot`.
 Scaffolded: Godot project, placeholder main scene, CI, desktop release
 workflow (unsigned; macOS not notarized). Not yet done: Android export preset
 and signed AAB/APK release, which need a keystore and secrets from the user
-(never generated unprompted); any sorting logic.
+(never generated unprompted); heapsort and insertion sort exist (`scripts/sorting/`) with a bar visualizer (`scenes/visualizer.tscn`); the game layer, more algorithms (merge sort, quicksort) and player-driven cache moves do not.
