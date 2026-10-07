@@ -9,6 +9,7 @@ extends RefCounted
 
 var _state: SortState
 var _steps: Array[SortStep] = []
+var _phase := ""
 
 
 ## The smallest cache the algorithm can run with on `item_count` elements.
@@ -19,6 +20,7 @@ func min_cache_size(_item_count: int) -> int:
 ## Returns the steps that sort `values` using a cache of `cache_size` slots.
 func sort(values: Array[int], cache_size: int) -> Array[SortStep]:
 	_steps = []
+	_phase = ""
 	var needed := min_cache_size(values.size())
 	if cache_size < needed:
 		push_error("needs a cache of at least %d slots" % needed)
@@ -26,6 +28,11 @@ func sort(values: Array[int], cache_size: int) -> Array[SortStep]:
 	_state = SortState.new(values, cache_size)
 	_run()
 	return _steps
+
+
+## Describes what the following steps are for; every recorded step carries it.
+func _set_phase(description: String) -> void:
+	_phase = description
 
 
 func _run() -> void:
@@ -55,6 +62,7 @@ func _move(from_index: int, to_index: int) -> void:
 
 
 func _record(step: SortStep) -> void:
+	step.note = _phase
 	var error := _state.apply(step)
 	if error != "":
 		push_error("illegal step: %s" % error)

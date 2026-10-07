@@ -24,6 +24,15 @@ func _sort_range(low: int, high: int) -> void:
 
 func _merge(low: int, middle: int, high: int) -> void:
 	var left_count := middle - low
+	_set_phase(
+		(
+			(
+				"Merge the sorted runs at positions %d-%d and %d-%d: park the left run in "
+				+ "the cache, then refill the array with the smaller front bar of each run"
+			)
+			% [low + 1, middle, middle + 1, high]
+		)
+	)
 	for slot in left_count:
 		_store(low + slot, slot)
 	var next_left := 0

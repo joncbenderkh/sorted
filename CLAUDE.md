@@ -49,7 +49,19 @@ input (touch/mouse) tests go in gdUnit4, whose scene runner simulates input.
   locations; negative = cache slot), `SortState` (validates every step,
   including cache limits), `SortAlgorithm` base class and its subclasses.
   An algorithm runs against a `SortState` and returns its recorded steps.
-- `scripts/ui/`: `SortBoard` draws a state; `visualizer.gd` replays steps.
+- Algorithms label what they are doing with `_set_phase(text)`; every
+  recorded `SortStep` carries that as `note`, which guided mode shows as the
+  goal. `SortStep.describe()` phrases a move for the Hint button.
+- `scripts/play/`: `DragMove` maps a drag between cells to a `SortStep`;
+  `PlaySession` applies the player's moves (free play, or guided along an
+  algorithm's own moves), counts them against par and explains refusals.
+  A run ends as soon as the array is sorted, so par can be beaten.
+- `scripts/ui/`: `SortBoard` draws a state and handles dragging;
+  `visualizer.gd` has Watch, Free play and Guided modes.
+
+Headless Godot drops simulated mouse input before it reaches controls, so
+gdUnit4 UI tests feed `SortBoard._gui_input` directly instead of using the
+scene runner's mouse simulation.
 
 GUT prints only a warning and exits 0 when a test script fails to parse, so
 check that the script count in the run summary matches the files in `tests/gut/`.
@@ -62,7 +74,12 @@ does not match `project.godot`.
 
 ## Status
 
-Scaffolded: Godot project, placeholder main scene, CI, desktop release
-workflow (unsigned; macOS not notarized). Not yet done: Android export preset
-and signed AAB/APK release, which need a keystore and secrets from the user
-(never generated unprompted); heapsort, insertion sort, merge sort and quicksort exist (`scripts/sorting/`) with a bar visualizer (`scenes/visualizer.tscn`); the game layer, a merge sort that adapts to a cache smaller than n/2, and player-driven cache moves do not.
+Exists: Godot project, CI, desktop release workflow (unsigned; macOS not
+notarized), four sorting algorithms (`scripts/sorting/`), a bar visualizer
+(`scenes/visualizer.tscn`), and player moves by drag and drop in free play
+(score is moves vs par) and guided modes.
+
+Not yet done: Android export preset and signed AAB/APK release (needs a
+keystore and secrets from the user, never generated unprompted); levels
+(sort type and cache size as difficulty); a merge sort that adapts to a cache
+smaller than n/2; undo.

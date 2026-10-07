@@ -1,5 +1,8 @@
 extends Control
-## Plays a sorting algorithm's steps on a SortBoard.
+## Plays a sorting algorithm's steps on a SortBoard, or lets the player make
+## the moves (free play against par, or guided along the algorithm).
+
+enum Mode { WATCH, FREE, GUIDED }
 
 const MIN_ITEMS := 8
 const MAX_ITEMS := 128
@@ -11,6 +14,18 @@ const CONTROL_HEIGHT := 48.0
 const COMPARE_COLOR := Color("f2c14e")
 const SWAP_COLOR := Color("e5484d")
 const MOVE_COLOR := Color("b57bee")
+const HINT_COLOR := Color("4cc9f0")
+const ERROR_COLOR := Color("ff6b6b")
+const MESSAGE_SECONDS := 3.0
+const MESSAGE_HEIGHT := 48.0
+const INFO_COLOR := Color("b8bcc6")
+const WATCH_TEXT := "Watching. Pick Free play or Guided to make the moves yourself."
+const FREE_TEXT := (
+	"Drag a bar onto another bar to swap them, onto a gap to move it, or into the Cache to store it. "
+	+ "Drag a cached bar back into the array to load it. Sort in fewer moves than par."
+)
+const FINISHED_TEXT := "Sorted! Press Shuffle to play again."
+const MODE_NAMES: Array[String] = ["Watch", "Free play", "Guided"]
 
 var _algorithms: Dictionary = {
 	"Heapsort": Heapsort,
@@ -19,17 +34,22 @@ var _algorithms: Dictionary = {
 	"Quicksort": Quicksort
 }
 var _state: SortState
+var _session: PlaySession
 var _steps: Array[SortStep] = []
 var _step_index := 0
 var _playing := false
 var _accumulator := 0.0
 var _board: SortBoard
+var _mode_picker: OptionButton
 var _algorithm_picker: OptionButton
 var _items_slider: HSlider
 var _speed_slider: HSlider
 var _play_button: Button
 var _step_button: Button
+var _hint_button: Button
 var _status: Label
+var _message: Label
+var _message_timer: Timer
 
 
 func _ready() -> void:
@@ -60,6 +80,14 @@ func _build_ui() -> void:
 	title.text = "Sorted %s" % Version.CURRENT
 	toolbar.add_child(title)
 
+	_mode_picker = OptionButton.new()
+	_mode_picker.name = "ModePicker"
+	_mode_picker.custom_minimum_size.y = CONTROL_HEIGHT
+	for mode_name in MODE_NAMES:
+		_mode_picker.add_item(mode_name)
+	_mode_picker.item_selected.connect(func(_index: int) -> void: _reset())
+	toolbar.add_child(_mode_picker)
+
 	_algorithm_picker = OptionButton.new()
 	_algorithm_picker.name = "AlgorithmPicker"
 	_algorithm_picker.custom_minimum_size.y = CONTROL_HEIGHT
@@ -75,13 +103,27 @@ func _build_ui() -> void:
 	_add_button(toolbar, "Shuffle", _reset)
 	_play_button = _add_button(toolbar, "Play", _toggle_playing)
 	_step_button = _add_button(toolbar, "Step", _step_once)
+	_hint_button = _add_button(toolbar, "Hint", _show_hint)
 
 	_status = Label.new()
+	_status.name = "Status"
 	toolbar.add_child(_status)
+
+	_message = Label.new()
+	_message.name = "Message"
+	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_message.custom_minimum_size.y = MESSAGE_HEIGHT
+	root.add_child(_message)
+
+	_message_timer = Timer.new()
+	_message_timer.one_shot = true
+	_message_timer.timeout.connect(_refresh_instructions)
+	add_child(_message_timer)
 
 	_board = SortBoard.new()
 	_board.name = "Board"
 	_board.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_board.move_requested.connect(_on_move_requested)
 	root.add_child(_board)
 
 
@@ -117,15 +159,32 @@ func _reset() -> void:
 	for i in count:
 		values.append(i + 1)
 	values.shuffle()
+	while SortState.new(values).is_sorted():
+		values.shuffle()
 	var algorithm_name := _algorithm_picker.get_item_text(_algorithm_picker.selected)
 	var algorithm: SortAlgorithm = _algorithms[algorithm_name].new()
 	var cache_size := algorithm.min_cache_size(count)
-	_steps = algorithm.sort(values, cache_size)
-	_state = SortState.new(values, cache_size)
+	_session = null
+	_steps = []
+	if _mode_picker.selected == Mode.WATCH:
+		_steps = algorithm.sort(values, cache_size)
+		_state = SortState.new(values, cache_size)
+	else:
+		var play_mode := (
+			PlaySession.Mode.FREE if _mode_picker.selected == Mode.FREE else PlaySession.Mode.GUIDED
+		)
+		_session = PlaySession.new(values, algorithm, play_mode, cache_size)
+		_state = _session.state
 	_step_index = 0
+	_message_timer.stop()
+	_play_button.disabled = _session != null
+	_speed_slider.editable = _session == null
+	_hint_button.visible = _mode_picker.selected == Mode.GUIDED
 	_set_playing(false)
+	_board.interactive = _session != null
 	_board.max_value = count
 	_board.show_state(_state)
+	_refresh_instructions()
 	_update_status()
 
 
@@ -139,7 +198,7 @@ func _set_playing(playing: bool) -> void:
 	_playing = playing
 	_accumulator = 0.0
 	_play_button.text = "Pause" if playing else "Play"
-	_step_button.disabled = playing
+	_step_button.disabled = playing or _session != null
 
 
 func _step_once() -> void:
@@ -171,5 +230,59 @@ func _highlights_for(step: SortStep) -> Dictionary:
 	return {step.first: color, step.second: color}
 
 
+func _on_move_requested(source: int, target: int) -> void:
+	if _session == null:
+		return
+	var step := DragMove.to_step(_state, source, target)
+	if step == null:
+		return
+	var error := _session.try_move(step)
+	if error != "":
+		_show_message(error, ERROR_COLOR, MESSAGE_SECONDS)
+		_board.show_state(_state)
+		return
+	_refresh_instructions()
+	var done := _session.is_finished()
+	_board.show_state(_state, {} if done else _highlights_for(step), done)
+	_update_status()
+
+
+func _show_hint() -> void:
+	var step := _session.expected_step() if _session != null else null
+	if step != null:
+		_board.show_state(_state, {step.first: HINT_COLOR, step.second: HINT_COLOR})
+		_show_message("Hint: %s." % step.describe(), HINT_COLOR)
+
+
+## Shows `text` in `color`; with `seconds` it then gives way to the instructions.
+func _show_message(text: String, color: Color, seconds: float = 0.0) -> void:
+	_message.text = text
+	_message.add_theme_color_override("font_color", color)
+	if seconds > 0.0:
+		_message_timer.start(seconds)
+	else:
+		_message_timer.stop()
+
+
+func _refresh_instructions() -> void:
+	_show_message(_instruction_text(), INFO_COLOR)
+
+
+func _instruction_text() -> String:
+	if _session == null:
+		return WATCH_TEXT
+	if _session.is_finished():
+		return FINISHED_TEXT
+	var expected := _session.expected_step()
+	if expected == null:
+		return FREE_TEXT
+	return "Goal: %s. Make its next move; Hint shows which bars." % expected.note
+
+
 func _update_status() -> void:
-	_status.text = "step %d / %d" % [_step_index, _steps.size()]
+	if _session == null:
+		_status.text = "step %d / %d" % [_step_index, _steps.size()]
+	elif _session.is_finished():
+		_status.text = _session.result_text()
+	else:
+		_status.text = "moves %d / par %d" % [_session.moves_used, _session.par]

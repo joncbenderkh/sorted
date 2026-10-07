@@ -10,12 +10,37 @@ enum Type { COMPARE, SWAP, STORE, LOAD, MOVE }
 var type: Type
 var first: int
 var second: int
+## What the algorithm is doing at this point, for players following along.
+var note := ""
 
 
 func _init(p_type: Type, p_first: int, p_second: int) -> void:
 	type = p_type
 	first = p_first
 	second = p_second
+
+
+## What the move asks for, phrased for a hint that highlights its two cells.
+func describe() -> String:
+	match type:
+		Type.SWAP:
+			return "swap the two highlighted bars"
+		Type.STORE:
+			return "store the highlighted bar in the cache"
+		Type.LOAD:
+			return "load the cached bar into the highlighted gap"
+		Type.MOVE:
+			return "move the highlighted bar into the highlighted gap"
+	return "compare the highlighted bars"
+
+
+## True when `other` does the same thing; a swap is the same either way round.
+func is_same_move(other: SortStep) -> bool:
+	if type != other.type:
+		return false
+	if type == Type.SWAP and first == other.second and second == other.first:
+		return true
+	return first == other.first and second == other.second
 
 
 ## Look at two elements, wherever they are.

@@ -27,6 +27,15 @@ func _sort_range(low: int, high: int) -> void:
 
 func _partition(low: int, high: int) -> int:
 	var middle := (low + high) / 2
+	_set_phase(
+		(
+			(
+				"Partition positions %d-%d: park a pivot in the cache, move smaller bars left "
+				+ "and larger bars right through the gap, then drop the pivot in the gap"
+			)
+			% [low + 1, high + 1]
+		)
+	)
 	if middle != low:
 		_swap(low, middle)
 	_store(low, SLOT)

@@ -23,6 +23,10 @@ static func is_cache_location(location: int) -> bool:
 	return location < 0
 
 
+static func cache_slot(location: int) -> int:
+	return -location - 1
+
+
 func array_size() -> int:
 	return _array.size()
 

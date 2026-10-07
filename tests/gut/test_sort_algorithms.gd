@@ -129,3 +129,19 @@ func test_quicksort_stays_near_n_log_n_on_awkward_input() -> void:
 			if step.type == SortStep.Type.COMPARE:
 				compares += 1
 		assert_lte(compares, size * ceili(log(size) / log(2)) * 2, "%s..." % [values.slice(0, 3)])
+
+
+func test_every_step_carries_a_note_for_players() -> void:
+	var values: Array[int] = [5, 3, 8, 1, 9, 2, 7, 4]
+	for algorithm_class in _algorithms:
+		var algorithm: SortAlgorithm = algorithm_class.new()
+		for step in algorithm.sort(values, algorithm.min_cache_size(values.size())):
+			assert_ne(step.note, "", "%s %s" % [algorithm_class.get_global_name(), step.type])
+
+
+func test_notes_change_as_the_algorithm_moves_on() -> void:
+	var values: Array[int] = [5, 3, 8, 1, 9, 2, 7, 4]
+	var notes := {}
+	for step in InsertionSort.new().sort(values, 1):
+		notes[step.note] = true
+	assert_gt(notes.size(), 1)
