@@ -44,7 +44,4 @@ func test_finished_run_has_no_highlights_left() -> void:
 
 
 func _status_label(runner: GdUnitSceneRunner) -> Label:
-	for label in runner.scene().find_children("*", "Label", true, false):
-		if label.text.begins_with("step "):
-			return label
-	return null
+	return runner.find_child("Status") as Label
