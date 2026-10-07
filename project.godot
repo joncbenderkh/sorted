@@ -8,7 +8,7 @@ config_version=5
 
 config/name="Sorted"
 config/version="0.1.0"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/visualizer.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
 [display]
