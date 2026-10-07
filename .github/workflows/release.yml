@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: 4.4.1
+
+jobs:
+  desktop:
+    name: desktop (Linux, Windows, macOS; unsigned)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: ${{ env.GODOT_VERSION }}
+          use-dotnet: false
+          include-templates: true
+      - name: Verify tag matches project version
+        run: |
+          version=$(sed -n 's/^config\/version="\(.*\)"/\1/p' project.godot)
+          test "v${version}" = "${GITHUB_REF_NAME}"
+      - name: Export
+        run: |
+          mkdir -p build/linux build/windows build/macos
+          godot --headless --import
+          godot --headless --export-release Linux
+          godot --headless --export-release Windows
+          godot --headless --export-release macOS
+      - name: Package
+        run: |
+          cd build
+          tar -czf "sorted-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" -C linux .
+          (cd windows && zip -r "../sorted-${GITHUB_REF_NAME}-windows-x86_64.zip" .)
+          mv macos/sorted.zip "sorted-${GITHUB_REF_NAME}-macos-universal.zip"
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: build/sorted-*
