@@ -4,3 +4,4 @@ export_credentials.cfg
 build/
 *.keystore
 *.jks
+reports/
